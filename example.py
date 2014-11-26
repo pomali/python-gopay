@@ -10,7 +10,7 @@ if TEST:
     redirect_url = "https://testgw.gopay.cz/gw/pay-full-v2"
 else:
     web_service_url = "https://gate.gopay.cz/axis/EPaymentServiceV2?wsdl"
-    redirect_url = "https://gate.gopay.cz/gw/pay-full-v2 "
+    redirect_url = "https://gate.gopay.cz/gw/pay-full-v2"
 
 
 def list_payment_methods():

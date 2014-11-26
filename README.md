@@ -21,6 +21,19 @@ sign/decrypt/encrypt messages.
 
 ### Create payment
 
+    from client import *
+    from secret import secret, target_goid
+    
+    TEST = True
+    
+    if TEST:
+        web_service_url = "https://testgw.gopay.cz/axis/EPaymentServiceV2?wsdl"
+        redirect_url = "https://testgw.gopay.cz/gw/pay-full-v2"
+    else:
+        web_service_url = "https://gate.gopay.cz/axis/EPaymentServiceV2?wsdl"
+        redirect_url = "https://gate.gopay.cz/gw/pay-full-v2"
+    
+
     def create_payment():
         gopay = GopayClient(web_service_url)
         gopay.create_client()
@@ -68,46 +81,69 @@ sign/decrypt/encrypt messages.
 
 
 ### Get payment info
-
-    # this part is quite universal for both success and failed url
-    # do some stuff to catch GET parameters after customer is redirected
-    # back from the gateway to your website
-    gopay = GopayClient("https://gate.gopay.cz/axis/EPaymentServiceV2?wsdl"
-    crypto = gopay.create_crypto("your secret")
-
-    message = "|".join([
-			safe_returned_target_goid,
-			safe_returned_payment_session_id,
-			safe_returned_parent_payment_session_id,
-			safe_returned_order_number,
-			"your secret",
-			])
-    local_signature = crypto.hash(message)
-    remote_signature = crypto.decrypt(safe_returned_encrypted_signature)
-    if local_signature == remote_signature:
-        gopay.create_client()
-        ep_session_info = client.create_ep_session_info()
-	ep_session_info.targetGoId = target_goid
-	ep_session_info.paymentSessionId = payment_session_id
-	ep_session_info.encryptedSignature = \
-		crypto.encrypt(
-				"|".join([
-					target_goid,
-					safe_returned_payment_session_id,
-					"your secret",
-					])
-				)
-	ep_status = gopay.get_payment_status(ep_session_info)
-	if ep_status.sessionState == gopay.CANCELED:
-		# do some stuff
-	elif ep_status.sessionState == gopay.TIMEOUTED:
-		# do some else
-	elif ep_status.sessionState == gopay.PAYMENT_TIMEOUTED:
-		# ...
-	else:
-		# ....
-
-	# this was for failed url. for success you should check
-	# gopay.PAID and gopay.PAYMENT_PENDING
+    
+    from client import *
+    from secret import secret, target_goid
+    
+    TEST = True
+    
+    if TEST:
+        web_service_url = "https://testgw.gopay.cz/axis/EPaymentServiceV2?wsdl"
+        redirect_url = "https://testgw.gopay.cz/gw/pay-full-v2"
+    else:
+        web_service_url = "https://gate.gopay.cz/axis/EPaymentServiceV2?wsdl"
+        redirect_url = "https://gate.gopay.cz/gw/pay-full-v2"
+        
+    def check_payment():
+        # this part is quite universal for both success and failed url
+        # do some stuff to catch GET parameters after customer is redirected
+        # back from the gateway to your website
+        safe_returned_target_goid = ''
+        safe_returned_payment_session_id = ''
+        safe_returned_parent_payment_session_id = ''
+        safe_returned_order_number = ''
+    
+        gopay = GopayClient(web_service_url)
+        crypto = gopay.create_crypto(secret)
+    
+        message = "|".join([
+            safe_returned_target_goid,
+            safe_returned_payment_session_id,
+            safe_returned_parent_payment_session_id,
+            safe_returned_order_number,
+            secret
+        ])
+        local_signature = crypto.hash(message)
+        remote_signature = crypto.decrypt(safe_returned_encrypted_signature)
+        if local_signature == remote_signature:
+            gopay.create_client()
+            ep_session_info = client.create_ep_session_info()
+        ep_session_info.targetGoId = target_goid
+        ep_session_info.paymentSessionId = payment_session_id
+        ep_session_info.encryptedSignature = \
+            crypto.encrypt(
+                "|".join([
+                    target_goid,
+                    safe_returned_payment_session_id,
+                    secret
+                ])
+            )
+        ep_status = gopay.get_payment_status(ep_session_info)
+        if ep_status.sessionState == gopay.CANCELED:
+            # do some stuff
+            print("gopay session canceled")
+        elif ep_status.sessionState == gopay.TIMEOUTED:
+            # do some else
+            print("gopay session timeouted")
+        elif ep_status.sessionState == gopay.PAYMENT_TIMEOUTED:
+            # ...
+            print("gopay session payment timeouted")
+        else:
+            print("gopay session ?? state: %s" % ep_status.sessionState)
+        # ....
+    
+        # this was for failed url. for success you should check
+        # gopay.PAID and gopay.PAYMENT_PENDING
+        print("finished")
 
 
