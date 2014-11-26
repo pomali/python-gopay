@@ -21,44 +21,50 @@ sign/decrypt/encrypt messages.
 
 ### Create payment
 
-    gopay = GopayClient("https://testgw.gopay.cz/axis/EPaymentServiceV2?wsdl")
-    gopay.create_client()
-    ep_command = gopay.set_ep_command(
-				      "your_secret",
-				      "target_goid",
-				      "13456",
-				      "3500",
-				      "The best product to buy",
-				      "EUR",
-				      "en",
-				      "eu_cg",
-				      "eu_cg,eu_gp_w,eu_paypal,eu_om",
-				      "mybestshop.com/gopay/success",
-				      "mybestshop.com/gopay/failed",
-				      p1="some message I want back",
-				      )
+    def create_payment():
+        gopay = GopayClient(web_service_url)
+        gopay.create_client()
+        ep_command = gopay.set_ep_command(
+            secret,
+            target_goid,
+            "13456",
+            "35.0",
+            "The best product to buy",
+            "EUR",
+            "en",
+            "eu_cg",
+            "eu_cg,eu_gp_w,eu_paypal,eu_om",
+            "http://mybestshop.com/gopay/success",
+            "http://mybestshop.com/gopay/failed",
+            p1="some message I want back",
+        )
 
-    ep_command.customerData.email = "some@where.com"
-    ep_command.customerData.firstName = "John"
-    ep_command.customerData.lastName = "Smith"
-				      
-    ep_status = gopay.create_payment(ep_command)
+        ep_command.customerData.email = "some@where.com"
+        ep_command.customerData.firstName = "John"
+        ep_command.customerData.lastName = "Smith"
 
-    if ep_status.result == gopay.CALL_COMPLETED:
-        # do your stuff like saving ep_status.paymentSessionId and so...
-	# ...
-	message = "|".join([
-			    ep_status.targetGoId,
-			    ep_status.paymentSessionId,
-			    "your secret"
-			    ])
-        crypto = gopay.create_crypto("your secret")
-	signature = crypto.encrypt(message)
-	redirect = "https://gate.gopay.cz/?sessionInfo.paymentSessionId=" + \
-            "&sessionInfo.targetGoId=" + target_goid + \
-            "&sessionInfo.encryptedSignature=" + signature
-	# redirect your customer to gate.gopay.cz through http redirect
-    # ..... 
+        ep_status = gopay.create_payment(ep_command)
+
+        if ep_status.result == gopay.CALL_COMPLETED:
+            print("gopay call completed")
+            # do your stuff like saving ep_status.paymentSessionId and so...
+        # ...
+        print(ep_status)
+        message_local = "|".join([
+            ep_status.targetGoId,
+            ep_status.paymentSessionId,
+            secret
+        ])
+        print(message_local)
+        crypto = gopay.create_crypto(secret)
+        signature = crypto.encrypt(message_local)
+        arguments = "sessionInfo.paymentSessionId={s_id}&sessionInfo.targetGoId={t_id}&sessionInfo.encryptedSignature={sig}".format(
+            s_id=ep_status.paymentSessionId, t_id=target_goid, sig=signature)
+        redirect = "{redirect_url}?{arguments}".format(
+            redirect_url=redirect_url, arguments=arguments)
+        # redirect your customer to gate.gopay.cz through http redirect
+        # .....
+        print("Redirect: %s" % redirect)
 
 
 ### Get payment info
