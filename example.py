@@ -1,3 +1,4 @@
+from operator import attrgetter, itemgetter
 from client import *
 from secret import secret, target_goid
 
@@ -12,9 +13,23 @@ else:
     redirect_url = "https://gate.gopay.cz/gw/pay-full-v2 "
 
 
+def list_payment_methods():
+    gopay = GopayClient(web_service_url)
+    gopay.create_client()
+    methods = gopay.getPaymentMethods()
+    for x in methods:
+        a = x[u'paymentMethod'].decode('utf-8')
+        b = unicode(x[u'code'])
+        print (u"%s : %s" % (a, b))
+
+    print (",".join(map(itemgetter('code'), methods)))
+
+
 def create_payment():
     gopay = GopayClient(web_service_url)
     gopay.create_client()
+    payment_methods = "eu_gp_w,eu_paypal,eu_gp_u,eu_gp_kb,cz_cs_c,eu_cg,eu_om,cz_rb,cz_kb,cz_mb,cz_fb,sk_tatrabank,sk_vubbank,sk_sp,sk_sberbank,sk_csob,sk_uni,sk_pabank,sk_otpbank,cz_csas,eu_bank,cz_sms,eu_pr_sms,cz_mp,SUPERCASH,eu_psc"
+
     ep_command = gopay.set_ep_command(
         secret,
         target_goid,
@@ -24,7 +39,7 @@ def create_payment():
         "EUR",
         "en",
         "eu_cg",
-        "eu_cg,eu_gp_w,eu_paypal,eu_om",
+        payment_methods,
         "http://mybestshop.com/gopay/success",
         "http://mybestshop.com/gopay/failed",
         p1="some message I want back",
@@ -46,7 +61,6 @@ def create_payment():
         ep_status.paymentSessionId,
         secret
     ])
-    print(message_local)
     crypto = gopay.create_crypto(secret)
     signature = crypto.encrypt(message_local)
     arguments = "sessionInfo.paymentSessionId={s_id}&sessionInfo.targetGoId={t_id}&sessionInfo.encryptedSignature={sig}".format(
@@ -55,7 +69,7 @@ def create_payment():
         redirect_url=redirect_url, arguments=arguments)
     # redirect your customer to gate.gopay.cz through http redirect
     # .....
-    print("Redirect: %s" % redirect)
+    print("Redirect to: \n%s" % redirect)
 
 
 def check_payment():

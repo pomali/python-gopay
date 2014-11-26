@@ -90,7 +90,7 @@ class GopayClient(object):
         urn = '{urn:AxisEPaymentProvider}EPaymentStatus'
         return self.client.factory.create(urn)
 
-    def getPaymentMethods(self, currency, channels):
+    def getPaymentMethods(self, currency=None, channels=None):
         """
         Will return list of available methods for desired 
         currency and your channels, since paymentMethodList()
@@ -103,16 +103,14 @@ class GopayClient(object):
             r = self.client.service.paymentMethodList()
             for m in r:
                 currencySplit = m.supportedCurrency.split(',')
-                if currency in currencySplit:
-                    if str(m.code) in channels:
-                        l.append(
-                            {
-                                'code': m.code,
-                                'logo': m.logo,
-                                'paymentMethod': \
-                                    m.paymentMethod.encode('utf-8'),
-                            }
-                        )
+                if (not currency or currency in currencySplit) and (not channels or str(m.code) in channels):
+                    l.append(
+                        {
+                            'code': m.code,
+                            'logo': m.logo,
+                            'paymentMethod': m.paymentMethod.encode('utf-8'),
+                        }
+                    )
             return l
         except:
             return []
