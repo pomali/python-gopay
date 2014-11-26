@@ -11,7 +11,7 @@ http://www.gopay.com
 ## There is an official gopay-python client. Why to hell another one? 
 
 Yes, that's true. It is written in non-very-pythonistic way. It uses
-SOAPpy and M2Crypto. And it is 2 years old and it just didn't worked
+SOAPpy and M2Crypto. And it is 2 years old and it just didn't work
 for me. I also use SUDS instead of SOAPpy. And I was happy with PyCrypto.
 
 ## How it works
