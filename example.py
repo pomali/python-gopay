@@ -72,15 +72,10 @@ def create_payment():
     print("Redirect to: \n%s" % redirect)
 
 
-def check_payment():
+def check_payment(payment_session_id, safe_returned_target_goid, safe_returned_payment_session_id, safe_returned_parent_payment_session_id, safe_returned_order_number):
     # this part is quite universal for both success and failed url
     # do some stuff to catch GET parameters after customer is redirected
     # back from the gateway to your website
-    safe_returned_target_goid = ''
-    safe_returned_payment_session_id = ''
-    safe_returned_parent_payment_session_id = ''
-    safe_returned_order_number = ''
-
     gopay = GopayClient(web_service_url)
     crypto = gopay.create_crypto(secret)
 
@@ -92,10 +87,10 @@ def check_payment():
         secret
     ])
     local_signature = crypto.hash(message)
-    remote_signature = crypto.decrypt(safe_returned_encrypted_signature)
+    remote_signature = gopay.decrypt(safe_returned_encrypted_signature)
     if local_signature == remote_signature:
         gopay.create_client()
-        ep_session_info = client.create_ep_session_info()
+        ep_session_info = gopay.create_ep_session_info()
     ep_session_info.targetGoId = target_goid
     ep_session_info.paymentSessionId = payment_session_id
     ep_session_info.encryptedSignature = \

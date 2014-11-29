@@ -1,3 +1,4 @@
+from decimal import Decimal
 from suds.client import Client
 
 from Crypto.Cipher import DES3
@@ -170,8 +171,7 @@ class GopayClient(object):
         ep_command.lang = lang
         ep_command.targetGoId = unicode(target_goid)
         ep_command.orderNumber = unicode(order_number)
-        price_split = str(total_price).split('.')
-        total_price = int(price_split[0]) * 100 + int(price_split[1])
+        total_price = total_price * Decimal(100)
         ep_command.totalPrice = str(total_price)
         ep_command.paymentChannels = channels
         ep_command.defaultPaymentChannel = default_channel
