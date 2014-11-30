@@ -72,7 +72,7 @@ def create_payment():
     print("Redirect to: \n%s" % redirect)
 
 
-def check_payment(payment_session_id, safe_returned_target_goid, safe_returned_payment_session_id, safe_returned_parent_payment_session_id, safe_returned_order_number):
+def check_payment(payment_session_id, safe_returned_target_goid, safe_returned_payment_session_id, safe_returned_parent_payment_session_id, safe_returned_order_number, safe_returned_encrypted_signature):
     # this part is quite universal for both success and failed url
     # do some stuff to catch GET parameters after customer is redirected
     # back from the gateway to your website
@@ -87,37 +87,34 @@ def check_payment(payment_session_id, safe_returned_target_goid, safe_returned_p
         secret
     ])
     local_signature = crypto.hash(message)
-    remote_signature = gopay.decrypt(safe_returned_encrypted_signature)
+    remote_signature = crypto.decrypt(safe_returned_encrypted_signature)
     if local_signature == remote_signature:
         gopay.create_client()
         ep_session_info = gopay.create_ep_session_info()
-    ep_session_info.targetGoId = target_goid
-    ep_session_info.paymentSessionId = payment_session_id
-    ep_session_info.encryptedSignature = \
-        crypto.encrypt(
-            "|".join([
-                target_goid,
-                safe_returned_payment_session_id,
-                secret
-            ])
-        )
-    ep_status = gopay.get_payment_status(ep_session_info)
-    if ep_status.sessionState == gopay.CANCELED:
-        # do some stuff
-        print("gopay session canceled")
-    elif ep_status.sessionState == gopay.TIMEOUTED:
-        # do some else
-        print("gopay session timeouted")
-    elif ep_status.sessionState == gopay.PAYMENT_TIMEOUTED:
-        # ...
-        print("gopay session payment timeouted")
-    else:
-        print("gopay session ?? state: %s" % ep_status.sessionState)
-    # ....
 
-    # this was for failed url. for success you should check
-    # gopay.PAID and gopay.PAYMENT_PENDING
-    print("finished")
+        ep_session_info.targetGoId = target_goid
+        ep_session_info.paymentSessionId = payment_session_id
+        ep_session_info.encryptedSignature = \
+            crypto.encrypt(
+                "|".join([
+                    target_goid,
+                    safe_returned_payment_session_id,
+                    secret
+                ])
+            )
+        ep_status = gopay.get_payment_status(ep_session_info)
+    # states: CREATED PAYMENT_METHOD_CHOSEN PAID AUTHORIZED CANCELED TIMEOUTED REFUNDED PARTIALLY_REFUNDED FAILED
+        if ep_status.sessionState == gopay.CANCELED:
+            print("gopay payment canceled")
+        elif ep_status.sessionState == gopay.TIMEOUTED:
+            print("gopay payment timeouted")
+        elif ep_status.sessionState == gopay.PAID:
+            print("gopay payment paid")
+        else:
+            print("gopay session ?? state: %s" % ep_status.sessionState)
+        print("finished")
+    else:
+        print("invalid remote signature")
 
 
 if __name__ == '__main__':
